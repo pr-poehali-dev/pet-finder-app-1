@@ -1,14 +1,575 @@
-// Update this page (the content is just a fallback if you fail to update the page)
+import { useState } from "react";
+import Icon from "@/components/ui/icon";
 
-const Index = () => {
+const DOG_IMG = "https://cdn.poehali.dev/projects/48dbc168-ef97-4112-a5d9-8f2497e37ea1/files/1b1d1e9e-ba73-4297-b83a-f6d8a7ad2024.jpg";
+const CAT_IMG = "https://cdn.poehali.dev/projects/48dbc168-ef97-4112-a5d9-8f2497e37ea1/files/08d15c17-5cf2-4e17-84ea-d9d823d73a41.jpg";
+const RABBIT_IMG = "https://cdn.poehali.dev/projects/48dbc168-ef97-4112-a5d9-8f2497e37ea1/files/1dfe1ff9-61be-44c4-9aa0-f7f4f60e9b6e.jpg";
+const COLLIE_IMG = "https://cdn.poehali.dev/projects/48dbc168-ef97-4112-a5d9-8f2497e37ea1/files/e3198954-4aa1-4cfa-affc-138db054fa26.jpg";
+
+type Tab = "feed" | "search" | "map" | "chat" | "favorites" | "profile";
+
+const pets = [
+  { id: 1, name: "Барсик", breed: "Золотистый ретривер", age: "2 года", city: "Москва", type: "Собака", img: DOG_IMG, desc: "Ласковый и игривый пёс, обожает детей и прогулки в парке." },
+  { id: 2, name: "Мурка", breed: "Рыжий табби", age: "1 год", city: "Санкт-Петербург", type: "Кошка", img: CAT_IMG, desc: "Спокойная кошечка, ищет уютный дом с хозяином на диване." },
+  { id: 3, name: "Снежок", breed: "Нидерландский карликовый", age: "8 месяцев", city: "Казань", type: "Кролик", img: RABBIT_IMG, desc: "Пушистый и любопытный, любит морковку и свежую зелень." },
+  { id: 4, name: "Рекс", breed: "Бордер колли", age: "3 года", city: "Москва", type: "Собака", img: COLLIE_IMG, desc: "Активный и умный пёс, знает более 20 команд. Нужен активный хозяин!" },
+];
+
+const news = [
+  { id: 1, title: "Приют «Лапки» нашёл дом для 50 кошек за месяц", time: "2 часа назад", emoji: "🐱", tag: "Новость" },
+  { id: 2, title: "Новые правила выгула собак в Москве с июня", time: "5 часов назад", emoji: "📋", tag: "Важно" },
+  { id: 3, title: "История Рекса: как пёс пережил зиму на улице", time: "вчера", emoji: "🐶", tag: "История" },
+  { id: 4, title: "Ветеринарная клиника дарит бесплатные прививки", time: "вчера", emoji: "💉", tag: "Акция" },
+];
+
+const initMessages = [
+  { id: 1, user: "Анна К.", avatar: "🦋", text: "Здравствуйте! Расскажите подробнее о Барсике?", time: "14:22", isMe: false },
+  { id: 2, user: "Я", avatar: "😊", text: "Привет! Барсик очень дружелюбный, любит играть с мячом.", time: "14:25", isMe: true },
+  { id: 3, user: "Анна К.", avatar: "🦋", text: "Отлично! Можно договориться о встрече?", time: "14:27", isMe: false },
+  { id: 4, user: "Я", avatar: "😊", text: "Конечно, пишите удобное время!", time: "14:28", isMe: true },
+];
+
+const mapPets = [
+  { id: 1, name: "Барсик", type: "🐕", x: 30, y: 40, city: "Парк Горького" },
+  { id: 2, name: "Мурка", type: "🐈", x: 55, y: 25, city: "Тверской район" },
+  { id: 3, name: "Снежок", type: "🐇", x: 70, y: 60, city: "Хамовники" },
+  { id: 4, name: "Рекс", type: "🐕", x: 20, y: 65, city: "Замоскворечье" },
+];
+
+export default function Index() {
+  const [activeTab, setActiveTab] = useState<Tab>("feed");
+  const [favorites, setFavorites] = useState<number[]>([2]);
+  const [selectedPet, setSelectedPet] = useState<typeof pets[0] | null>(null);
+  const [searchQuery, setSearchQuery] = useState("");
+  const [filterType, setFilterType] = useState("Все");
+  const [filterCity, setFilterCity] = useState("Все города");
+  const [chatInput, setChatInput] = useState("");
+  const [messages, setMessages] = useState(initMessages);
+  const [mapSelected, setMapSelected] = useState<typeof mapPets[0] | null>(null);
+
+  const toggleFavorite = (id: number) => {
+    setFavorites(prev => prev.includes(id) ? prev.filter(f => f !== id) : [...prev, id]);
+  };
+
+  const filteredPets = pets.filter(p => {
+    const matchSearch = p.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      p.breed.toLowerCase().includes(searchQuery.toLowerCase());
+    const matchType = filterType === "Все" || p.type === filterType;
+    const matchCity = filterCity === "Все города" || p.city === filterCity;
+    return matchSearch && matchType && matchCity;
+  });
+
+  const favoritePets = pets.filter(p => favorites.includes(p.id));
+
+  const sendMessage = () => {
+    if (!chatInput.trim()) return;
+    setMessages(prev => [...prev, {
+      id: prev.length + 1, user: "Я", avatar: "😊",
+      text: chatInput,
+      time: new Date().toLocaleTimeString("ru-RU", { hour: "2-digit", minute: "2-digit" }),
+      isMe: true,
+    }]);
+    setChatInput("");
+  };
+
+  const tabs: { id: Tab; icon: string; label: string }[] = [
+    { id: "feed", icon: "Newspaper", label: "Лента" },
+    { id: "search", icon: "Search", label: "Поиск" },
+    { id: "map", icon: "MapPin", label: "Карта" },
+    { id: "chat", icon: "MessageCircle", label: "Чат" },
+    { id: "favorites", icon: "Heart", label: "Избранное" },
+    { id: "profile", icon: "User", label: "Профиль" },
+  ];
+
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-100">
-      <div className="text-center">
-        <h1 className="text-4xl font-bold mb-4 color-black text-black">Добро пожаловать!</h1>
-        <p className="text-xl text-gray-600">тут будет отображаться ваш проект</p>
-      </div>
+    <div className="min-h-screen bg-background paw-bg flex flex-col max-w-md mx-auto relative">
+      {/* Header */}
+      <header className="bg-white/90 backdrop-blur-sm sticky top-0 z-50 px-5 py-3 flex items-center justify-between border-b border-border shadow-sm">
+        <div className="flex items-center gap-2">
+          <span className="text-3xl animate-bounce-soft inline-block">🐾</span>
+          <span className="font-pacifico text-2xl text-primary">PawFind</span>
+        </div>
+        <div className="flex items-center gap-2">
+          <button className="w-9 h-9 rounded-full bg-muted flex items-center justify-center hover:bg-primary hover:text-white transition-colors">
+            <Icon name="Bell" size={18} />
+          </button>
+          <div className="w-9 h-9 rounded-full bg-gradient-to-br from-primary to-orange-300 flex items-center justify-center text-white font-bold text-sm">А</div>
+        </div>
+      </header>
+
+      {/* Content */}
+      <main className="flex-1 overflow-y-auto pb-24">
+
+        {/* FEED TAB */}
+        {activeTab === "feed" && (
+          <div className="animate-fade-in">
+            <div className="mx-4 mt-5 rounded-3xl bg-gradient-to-br from-primary to-orange-300 p-5 text-white relative overflow-hidden">
+              <div className="absolute right-0 bottom-0 text-8xl opacity-20 rotate-12 select-none">🐾</div>
+              <p className="text-sm font-semibold opacity-90 mb-1">Сегодня ищут дом</p>
+              <h2 className="text-3xl font-black mb-3">128 питомцев</h2>
+              <button className="bg-white text-primary font-bold px-5 py-2 rounded-full text-sm hover:shadow-lg transition-shadow">
+                Помочь сейчас →
+              </button>
+            </div>
+
+            <div className="px-4 mt-5">
+              <div className="flex items-center justify-between mb-3">
+                <h3 className="font-black text-lg">Рядом с тобой</h3>
+                <button className="text-primary text-sm font-bold" onClick={() => setActiveTab("search")}>Все →</button>
+              </div>
+              <div className="flex gap-3 overflow-x-auto pb-2 -mx-1 px-1" style={{ scrollbarWidth: "none" }}>
+                {pets.map((pet, i) => (
+                  <div
+                    key={pet.id}
+                    className="flex-shrink-0 w-44 bg-white rounded-2xl overflow-hidden shadow-sm card-hover cursor-pointer"
+                    style={{ animationDelay: `${i * 0.1}s` }}
+                    onClick={() => setSelectedPet(pet)}
+                  >
+                    <div className="relative h-40 overflow-hidden">
+                      <img src={pet.img} alt={pet.name} className="w-full h-full object-cover" />
+                      <button
+                        className="absolute top-2 right-2 w-8 h-8 bg-white/90 rounded-full flex items-center justify-center shadow-sm"
+                        onClick={e => { e.stopPropagation(); toggleFavorite(pet.id); }}
+                      >
+                        <Icon name="Heart" size={14} className={favorites.includes(pet.id) ? "fill-red-500 text-red-500" : "text-gray-400"} />
+                      </button>
+                      <span className="absolute bottom-2 left-2 bg-secondary text-white text-xs font-bold px-2 py-0.5 rounded-full">{pet.type}</span>
+                    </div>
+                    <div className="p-3">
+                      <p className="font-black text-sm">{pet.name}</p>
+                      <p className="text-muted-foreground text-xs">{pet.breed}</p>
+                      <div className="flex items-center gap-1 mt-1">
+                        <Icon name="MapPin" size={10} className="text-primary" />
+                        <span className="text-xs text-muted-foreground">{pet.city}</span>
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            <div className="px-4 mt-5">
+              <h3 className="font-black text-lg mb-3">Новости и объявления</h3>
+              <div className="space-y-3">
+                {news.map((item, i) => (
+                  <div key={item.id} className="bg-white rounded-2xl p-4 flex items-start gap-3 shadow-sm card-hover cursor-pointer animate-fade-in" style={{ animationDelay: `${i * 0.1}s` }}>
+                    <div className="w-12 h-12 bg-muted rounded-xl flex items-center justify-center text-2xl flex-shrink-0">{item.emoji}</div>
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center gap-2 mb-1">
+                        <span className={`text-xs font-bold px-2 py-0.5 rounded-full ${item.tag === "Важно" ? "bg-red-100 text-red-600" : item.tag === "Акция" ? "bg-green-100 text-green-600" : "bg-orange-100 text-primary"}`}>
+                          {item.tag}
+                        </span>
+                      </div>
+                      <p className="font-bold text-sm leading-snug">{item.title}</p>
+                      <p className="text-xs text-muted-foreground mt-1">{item.time}</p>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* SEARCH TAB */}
+        {activeTab === "search" && (
+          <div className="px-4 pt-5 animate-fade-in">
+            <h2 className="font-black text-2xl mb-4">Найти питомца</h2>
+            <div className="relative mb-4">
+              <Icon name="Search" size={18} className="absolute left-4 top-1/2 -translate-y-1/2 text-muted-foreground" />
+              <input
+                type="text"
+                placeholder="Имя или порода..."
+                value={searchQuery}
+                onChange={e => setSearchQuery(e.target.value)}
+                className="w-full pl-11 pr-4 py-3 bg-white rounded-2xl border border-border focus:outline-none focus:ring-2 focus:ring-primary font-nunito"
+              />
+            </div>
+            <div className="flex gap-2 mb-4 overflow-x-auto pb-1" style={{ scrollbarWidth: "none" }}>
+              {["Все", "Собака", "Кошка", "Кролик"].map(type => (
+                <button
+                  key={type}
+                  onClick={() => setFilterType(type)}
+                  className={`flex-shrink-0 px-4 py-2 rounded-full text-sm font-bold transition-all ${filterType === type ? "bg-primary text-white shadow-md" : "bg-white text-foreground border border-border"}`}
+                >
+                  {type === "Собака" ? "🐕 Собака" : type === "Кошка" ? "🐈 Кошка" : type === "Кролик" ? "🐇 Кролик" : "Все виды"}
+                </button>
+              ))}
+            </div>
+            <div className="flex gap-2 mb-5 overflow-x-auto pb-1" style={{ scrollbarWidth: "none" }}>
+              {["Все города", "Москва", "Санкт-Петербург", "Казань"].map(city => (
+                <button
+                  key={city}
+                  onClick={() => setFilterCity(city)}
+                  className={`flex-shrink-0 px-4 py-2 rounded-full text-sm font-bold transition-all ${filterCity === city ? "bg-secondary text-white shadow-md" : "bg-white text-foreground border border-border"}`}
+                >
+                  {city}
+                </button>
+              ))}
+            </div>
+            <p className="text-sm text-muted-foreground mb-3 font-semibold">Найдено: {filteredPets.length}</p>
+            <div className="space-y-3">
+              {filteredPets.map((pet, i) => (
+                <div key={pet.id} className="bg-white rounded-2xl overflow-hidden shadow-sm card-hover cursor-pointer flex animate-fade-in" style={{ animationDelay: `${i * 0.08}s` }} onClick={() => setSelectedPet(pet)}>
+                  <img src={pet.img} alt={pet.name} className="w-28 h-28 object-cover flex-shrink-0" />
+                  <div className="p-4 flex-1">
+                    <div className="flex items-start justify-between">
+                      <div>
+                        <p className="font-black text-base">{pet.name}</p>
+                        <p className="text-sm text-muted-foreground">{pet.breed}</p>
+                        <p className="text-xs text-muted-foreground">{pet.age}</p>
+                      </div>
+                      <button onClick={e => { e.stopPropagation(); toggleFavorite(pet.id); }} className="mt-1">
+                        <Icon name="Heart" size={20} className={favorites.includes(pet.id) ? "fill-red-500 text-red-500" : "text-gray-300"} />
+                      </button>
+                    </div>
+                    <div className="flex items-center gap-3 mt-2">
+                      <span className="bg-secondary/15 text-secondary text-xs font-bold px-2 py-0.5 rounded-full">{pet.type}</span>
+                      <div className="flex items-center gap-1">
+                        <Icon name="MapPin" size={11} className="text-primary" />
+                        <span className="text-xs text-muted-foreground">{pet.city}</span>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              ))}
+              {filteredPets.length === 0 && (
+                <div className="text-center py-16 animate-scale-in">
+                  <div className="text-6xl mb-4">🔍</div>
+                  <p className="font-bold text-lg">Питомцев не найдено</p>
+                  <p className="text-muted-foreground text-sm mt-1">Попробуй изменить фильтры</p>
+                </div>
+              )}
+            </div>
+          </div>
+        )}
+
+        {/* MAP TAB */}
+        {activeTab === "map" && (
+          <div className="animate-fade-in">
+            <div className="px-4 pt-5 mb-3">
+              <h2 className="font-black text-2xl">Карта питомцев</h2>
+              <p className="text-muted-foreground text-sm">Москва и окрестности</p>
+            </div>
+            <div className="mx-4 rounded-3xl overflow-hidden shadow-lg relative" style={{ height: "360px" }}>
+              <div className="w-full h-full bg-gradient-to-br from-green-100 via-green-200 to-teal-100 relative">
+                <div className="absolute inset-0">
+                  <div className="absolute top-1/3 left-0 right-0 h-2 bg-white/60 rounded" />
+                  <div className="absolute top-2/3 left-0 right-0 h-1.5 bg-white/50 rounded" />
+                  <div className="absolute left-1/3 top-0 bottom-0 w-2 bg-white/60 rounded" />
+                  <div className="absolute left-2/3 top-0 bottom-0 w-1.5 bg-white/50 rounded" />
+                  <div className="absolute top-[15%] left-[5%] right-[20%] h-1 bg-white/40 rounded rotate-12" />
+                </div>
+                <div className="absolute top-[20%] left-[10%] w-16 h-12 bg-green-400/40 rounded-xl" />
+                <div className="absolute bottom-[20%] right-[15%] w-20 h-14 bg-green-400/30 rounded-xl" />
+                {mapPets.map(p => (
+                  <button
+                    key={p.id}
+                    className={`absolute transform -translate-x-1/2 -translate-y-1/2 transition-all ${mapSelected?.id === p.id ? "scale-125" : "scale-100 hover:scale-110"}`}
+                    style={{ left: `${p.x}%`, top: `${p.y}%` }}
+                    onClick={() => setMapSelected(mapSelected?.id === p.id ? null : p)}
+                  >
+                    <div className={`w-10 h-10 rounded-full flex items-center justify-center text-xl shadow-lg border-2 ${mapSelected?.id === p.id ? "bg-primary border-white" : "bg-white border-primary"}`}>
+                      {p.type}
+                    </div>
+                  </button>
+                ))}
+                <div className="absolute" style={{ left: "50%", top: "50%", transform: "translate(-50%,-50%)" }}>
+                  <div className="w-4 h-4 bg-blue-500 rounded-full border-2 border-white shadow-lg" />
+                  <div className="w-10 h-10 bg-blue-200/40 rounded-full absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 animate-ping" />
+                </div>
+                <div className="absolute bottom-3 left-3 bg-white/90 rounded-xl px-3 py-2 text-xs font-semibold">
+                  📍 Вы здесь
+                </div>
+              </div>
+            </div>
+            {mapSelected && (
+              <div className="mx-4 mt-3 bg-white rounded-2xl p-4 shadow-sm animate-scale-in flex items-center gap-3">
+                <div className="text-3xl">{mapSelected.type}</div>
+                <div className="flex-1">
+                  <p className="font-black">{mapSelected.name}</p>
+                  <p className="text-sm text-muted-foreground">{mapSelected.city}</p>
+                </div>
+                <button className="bg-primary text-white font-bold px-4 py-2 rounded-full text-sm">Подробнее</button>
+              </div>
+            )}
+            <div className="px-4 mt-4">
+              <h3 className="font-black text-base mb-3">Ближайшие питомцы</h3>
+              <div className="space-y-2">
+                {mapPets.map(p => (
+                  <div key={p.id} className="bg-white rounded-xl px-4 py-3 flex items-center gap-3 shadow-sm cursor-pointer card-hover" onClick={() => setMapSelected(p)}>
+                    <span className="text-2xl">{p.type}</span>
+                    <div className="flex-1">
+                      <p className="font-bold text-sm">{p.name}</p>
+                      <p className="text-xs text-muted-foreground">{p.city}</p>
+                    </div>
+                    <Icon name="ChevronRight" size={16} className="text-muted-foreground" />
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* CHAT TAB */}
+        {activeTab === "chat" && (
+          <div className="animate-fade-in flex flex-col">
+            <div className="px-4 pt-5 mb-3">
+              <h2 className="font-black text-2xl">Чат</h2>
+            </div>
+            <div className="px-4 mb-4">
+              <div className="bg-white rounded-2xl overflow-hidden shadow-sm">
+                {[
+                  { name: "Анна К.", last: "Можно договориться о встрече?", time: "14:27", avatar: "🦋", unread: 2 },
+                  { name: "Приют Лапки", last: "Спасибо за интерес!", time: "вчера", avatar: "🏠", unread: 0 },
+                  { name: "Дмитрий В.", last: "Рекс ещё доступен?", time: "вчера", avatar: "🐾", unread: 1 },
+                ].map((chat, i) => (
+                  <div key={i} className={`flex items-center gap-3 px-4 py-3 cursor-pointer hover:bg-muted/50 transition-colors ${i > 0 ? "border-t border-border" : ""}`}>
+                    <div className="w-12 h-12 bg-gradient-to-br from-primary/20 to-secondary/20 rounded-full flex items-center justify-center text-2xl flex-shrink-0">{chat.avatar}</div>
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center justify-between">
+                        <p className="font-bold text-sm">{chat.name}</p>
+                        <span className="text-xs text-muted-foreground">{chat.time}</span>
+                      </div>
+                      <p className="text-xs text-muted-foreground truncate">{chat.last}</p>
+                    </div>
+                    {chat.unread > 0 && (
+                      <div className="w-5 h-5 bg-primary rounded-full flex items-center justify-center flex-shrink-0">
+                        <span className="text-white text-xs font-bold">{chat.unread}</span>
+                      </div>
+                    )}
+                  </div>
+                ))}
+              </div>
+            </div>
+            <div className="mx-4 bg-white rounded-2xl shadow-sm overflow-hidden">
+              <div className="flex items-center gap-3 px-4 py-3 border-b border-border bg-muted/30">
+                <div className="w-9 h-9 bg-gradient-to-br from-primary/20 to-secondary/20 rounded-full flex items-center justify-center text-xl">🦋</div>
+                <div>
+                  <p className="font-bold text-sm">Анна К.</p>
+                  <p className="text-xs text-secondary">● Онлайн</p>
+                </div>
+              </div>
+              <div className="p-4 space-y-3 max-h-64 overflow-y-auto">
+                {messages.map(msg => (
+                  <div key={msg.id} className={`flex gap-2 ${msg.isMe ? "flex-row-reverse" : ""}`}>
+                    <div className="w-8 h-8 rounded-full bg-muted flex items-center justify-center text-base flex-shrink-0">{msg.avatar}</div>
+                    <div className={`max-w-[75%] px-4 py-2 rounded-2xl text-sm ${msg.isMe ? "bg-primary text-white rounded-tr-sm" : "bg-muted rounded-tl-sm"}`}>
+                      <p>{msg.text}</p>
+                      <p className={`text-xs mt-1 ${msg.isMe ? "text-white/70" : "text-muted-foreground"}`}>{msg.time}</p>
+                    </div>
+                  </div>
+                ))}
+              </div>
+              <div className="flex items-center gap-2 p-3 border-t border-border">
+                <input
+                  type="text"
+                  placeholder="Написать сообщение..."
+                  value={chatInput}
+                  onChange={e => setChatInput(e.target.value)}
+                  onKeyDown={e => e.key === "Enter" && sendMessage()}
+                  className="flex-1 bg-muted rounded-full px-4 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary font-nunito"
+                />
+                <button onClick={sendMessage} className="w-10 h-10 bg-primary rounded-full flex items-center justify-center text-white hover:bg-primary/90 transition-colors flex-shrink-0">
+                  <Icon name="Send" size={16} />
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* FAVORITES TAB */}
+        {activeTab === "favorites" && (
+          <div className="px-4 pt-5 animate-fade-in">
+            <h2 className="font-black text-2xl mb-2">Избранное</h2>
+            <p className="text-muted-foreground text-sm mb-5">{favoritePets.length} питомца сохранено</p>
+            {favoritePets.length === 0 ? (
+              <div className="text-center py-20 animate-scale-in">
+                <div className="text-7xl mb-4 inline-block animate-bounce-soft">🤍</div>
+                <p className="font-black text-xl">Пока пусто</p>
+                <p className="text-muted-foreground text-sm mt-2">Нажми ❤️ на карточке питомца,<br />чтобы добавить в избранное</p>
+                <button onClick={() => setActiveTab("search")} className="mt-6 bg-primary text-white font-bold px-6 py-3 rounded-full hover:shadow-lg transition-shadow">
+                  Найти питомца
+                </button>
+              </div>
+            ) : (
+              <div className="space-y-4">
+                {favoritePets.map((pet, i) => (
+                  <div key={pet.id} className="bg-white rounded-2xl overflow-hidden shadow-sm card-hover animate-slide-up" style={{ animationDelay: `${i * 0.1}s` }}>
+                    <div className="flex">
+                      <img src={pet.img} alt={pet.name} className="w-32 h-32 object-cover flex-shrink-0" />
+                      <div className="p-4 flex-1">
+                        <div className="flex items-start justify-between">
+                          <div>
+                            <p className="font-black text-base">{pet.name}</p>
+                            <p className="text-sm text-muted-foreground">{pet.breed}</p>
+                            <p className="text-xs text-muted-foreground">{pet.age} · {pet.city}</p>
+                          </div>
+                          <button onClick={() => toggleFavorite(pet.id)}>
+                            <Icon name="Heart" size={20} className="fill-red-500 text-red-500" />
+                          </button>
+                        </div>
+                        <p className="text-xs text-muted-foreground mt-2 line-clamp-2">{pet.desc}</p>
+                        <button className="mt-2 bg-primary text-white text-xs font-bold px-4 py-1.5 rounded-full hover:shadow-md transition-shadow" onClick={() => setSelectedPet(pet)}>
+                          Подробнее
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* PROFILE TAB */}
+        {activeTab === "profile" && (
+          <div className="animate-fade-in">
+            <div className="bg-gradient-to-br from-primary to-orange-300 px-4 pt-6 pb-16 relative">
+              <div className="flex items-center gap-4">
+                <div className="w-20 h-20 rounded-full bg-white flex items-center justify-center text-4xl shadow-lg">😊</div>
+                <div className="text-white">
+                  <p className="font-black text-xl">Александра</p>
+                  <p className="opacity-90 text-sm">Москва</p>
+                  <p className="opacity-80 text-xs mt-1">С нами с марта 2024</p>
+                </div>
+              </div>
+            </div>
+            <div className="mx-4 -mt-10 bg-white rounded-2xl shadow-lg p-4 mb-5">
+              <div className="grid grid-cols-3 gap-2 text-center">
+                {[
+                  { val: "3", label: "Питомца", emoji: "🐾" },
+                  { val: `${favoritePets.length}`, label: "Избранных", emoji: "❤️" },
+                  { val: "12", label: "Сообщений", emoji: "💬" },
+                ].map((stat, i) => (
+                  <div key={i} className="bg-muted rounded-xl p-3">
+                    <div className="text-xl mb-1">{stat.emoji}</div>
+                    <p className="font-black text-xl text-primary">{stat.val}</p>
+                    <p className="text-xs text-muted-foreground">{stat.label}</p>
+                  </div>
+                ))}
+              </div>
+            </div>
+            <div className="px-4 mb-5">
+              <h3 className="font-black text-lg mb-3">Мои питомцы</h3>
+              <div className="flex gap-3 overflow-x-auto pb-2" style={{ scrollbarWidth: "none" }}>
+                {pets.slice(0, 3).map(pet => (
+                  <div key={pet.id} className="flex-shrink-0 w-24 text-center">
+                    <div className="w-20 h-20 rounded-2xl overflow-hidden mx-auto mb-1">
+                      <img src={pet.img} alt={pet.name} className="w-full h-full object-cover" />
+                    </div>
+                    <p className="text-xs font-bold truncate">{pet.name}</p>
+                  </div>
+                ))}
+                <div className="flex-shrink-0 w-24 text-center">
+                  <div className="w-20 h-20 rounded-2xl bg-muted flex items-center justify-center mx-auto mb-1 border-2 border-dashed border-border">
+                    <Icon name="Plus" size={24} className="text-muted-foreground" />
+                  </div>
+                  <p className="text-xs text-muted-foreground">Добавить</p>
+                </div>
+              </div>
+            </div>
+            <div className="px-4">
+              <div className="bg-white rounded-2xl shadow-sm overflow-hidden">
+                {[
+                  { icon: "Bell", label: "Уведомления", desc: "Включены" },
+                  { icon: "Shield", label: "Безопасность", desc: "Верифицирован" },
+                  { icon: "HelpCircle", label: "Поддержка", desc: "" },
+                  { icon: "Settings", label: "Настройки", desc: "" },
+                ].map((item, i) => (
+                  <div key={i} className={`flex items-center gap-3 px-4 py-4 cursor-pointer hover:bg-muted/50 transition-colors ${i > 0 ? "border-t border-border" : ""}`}>
+                    <div className="w-10 h-10 bg-primary/10 rounded-xl flex items-center justify-center">
+                      <Icon name={item.icon as "Bell"} size={18} className="text-primary" />
+                    </div>
+                    <p className="font-bold text-sm flex-1">{item.label}</p>
+                    <div className="flex items-center gap-2">
+                      {item.desc && <span className="text-xs text-muted-foreground">{item.desc}</span>}
+                      <Icon name="ChevronRight" size={16} className="text-muted-foreground" />
+                    </div>
+                  </div>
+                ))}
+              </div>
+              <button className="w-full mt-4 mb-6 py-3 rounded-2xl border-2 border-red-200 text-red-500 font-bold text-sm hover:bg-red-50 transition-colors">
+                Выйти из аккаунта
+              </button>
+            </div>
+          </div>
+        )}
+      </main>
+
+      {/* Bottom navigation */}
+      <nav className="fixed bottom-0 left-1/2 -translate-x-1/2 w-full max-w-md bg-white/95 backdrop-blur-md border-t border-border px-2 py-2 z-50">
+        <div className="flex items-center justify-around">
+          {tabs.map(tab => (
+            <button
+              key={tab.id}
+              onClick={() => setActiveTab(tab.id)}
+              className={`flex flex-col items-center gap-0.5 px-3 py-1.5 rounded-2xl transition-all ${activeTab === tab.id ? "bg-primary/10 text-primary" : "text-muted-foreground hover:text-foreground"}`}
+            >
+              <div className="relative">
+                <Icon name={tab.icon as "Newspaper"} size={22} />
+                {tab.id === "chat" && (
+                  <div className="absolute -top-1 -right-1 w-3 h-3 bg-primary rounded-full border border-white" />
+                )}
+                {tab.id === "favorites" && favorites.length > 0 && (
+                  <div className="absolute -top-1 -right-1 w-4 h-4 bg-red-500 rounded-full border border-white flex items-center justify-center">
+                    <span className="text-white text-[8px] font-bold">{favorites.length}</span>
+                  </div>
+                )}
+              </div>
+              <span className={`text-[10px] font-bold ${activeTab === tab.id ? "text-primary" : ""}`}>{tab.label}</span>
+            </button>
+          ))}
+        </div>
+      </nav>
+
+      {/* Pet detail modal */}
+      {selectedPet && (
+        <div className="fixed inset-0 z-[100] flex items-end justify-center" onClick={() => setSelectedPet(null)}>
+          <div className="absolute inset-0 bg-black/40 backdrop-blur-sm" />
+          <div className="relative bg-white w-full max-w-md rounded-t-3xl animate-slide-up overflow-hidden" onClick={e => e.stopPropagation()}>
+            <div className="relative h-72">
+              <img src={selectedPet.img} alt={selectedPet.name} className="w-full h-full object-cover" />
+              <button onClick={() => setSelectedPet(null)} className="absolute top-4 right-4 w-9 h-9 bg-white/90 rounded-full flex items-center justify-center shadow-md">
+                <Icon name="X" size={18} />
+              </button>
+              <button
+                onClick={() => toggleFavorite(selectedPet.id)}
+                className="absolute top-4 left-4 w-9 h-9 bg-white/90 rounded-full flex items-center justify-center shadow-md"
+              >
+                <Icon name="Heart" size={18} className={favorites.includes(selectedPet.id) ? "fill-red-500 text-red-500" : "text-gray-400"} />
+              </button>
+            </div>
+            <div className="p-5">
+              <div className="flex items-start justify-between mb-2">
+                <div>
+                  <h3 className="font-black text-2xl">{selectedPet.name}</h3>
+                  <p className="text-muted-foreground">{selectedPet.breed} · {selectedPet.age}</p>
+                </div>
+                <span className="bg-secondary text-white font-bold px-3 py-1 rounded-full text-sm">{selectedPet.type}</span>
+              </div>
+              <div className="flex items-center gap-1 mb-3">
+                <Icon name="MapPin" size={14} className="text-primary" />
+                <span className="text-sm text-muted-foreground">{selectedPet.city}</span>
+              </div>
+              <p className="text-sm text-muted-foreground mb-5">{selectedPet.desc}</p>
+              <div className="flex gap-3">
+                <button
+                  className="flex-1 bg-primary text-white font-bold py-3 rounded-2xl hover:shadow-lg transition-shadow"
+                  onClick={() => { setSelectedPet(null); setActiveTab("chat"); }}
+                >
+                  Написать хозяину
+                </button>
+                <button
+                  className="w-12 h-12 border-2 border-border rounded-2xl flex items-center justify-center hover:bg-muted transition-colors"
+                  onClick={() => { setSelectedPet(null); setActiveTab("map"); }}
+                >
+                  <Icon name="MapPin" size={20} className="text-primary" />
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
-};
-
-export default Index;
+}
