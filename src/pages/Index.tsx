@@ -1,5 +1,51 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Icon from "@/components/ui/icon";
+
+type Theme = "light" | "dark" | "system";
+type Lang = "ru" | "en";
+
+const T: Record<Lang, Record<string, string>> = {
+  ru: {
+    feed: "Лента", search: "Поиск", map: "Карта", chat: "Чат", favorites: "Избранное", profile: "Профиль",
+    nearYou: "Рядом с тобой", allPets: "Все →", newsTitle: "Новости и объявления",
+    heroSub: "Сегодня ищут дом", heroCta: "Помочь сейчас →", heroCount: "128 питомцев",
+    searchPlaceholder: "Имя или порода...", allTypes: "Все виды", allCities: "Все города",
+    found: "Найдено:", notFound: "Питомцев не найдено", changeFilters: "Попробуй изменить фильтры",
+    mapTitle: "Карта питомцев", mapSub: "Москва и окрестности", nearest: "Ближайшие питомцы",
+    details: "Подробнее", youAreHere: "📍 Вы здесь",
+    chatTitle: "Чат", online: "● Онлайн", messagePlaceholder: "Написать сообщение...",
+    favTitle: "Избранное", favSaved: "питомца сохранено", favEmpty: "Пока пусто",
+    favHint: "Нажми ❤️ на карточке питомца,\nчтобы добавить в избранное", findPet: "Найти питомца",
+    profileName: "Александра", profileCity: "Москва", profileSince: "С нами с марта 2024",
+    myPets: "Мои питомцы", add: "Добавить", notifications: "Уведомления", enabled: "Включены",
+    security: "Безопасность", verified: "Верифицирован", support: "Поддержка", settings: "Настройки",
+    logout: "Выйти из аккаунта", writeTo: "Написать хозяину",
+    settingsTitle: "Настройки", themeLabel: "Тема", langLabel: "Язык",
+    themeLight: "Светлая", themeDark: "Тёмная", themeSystem: "Системная",
+    langRu: "Русский", langEn: "English", close: "Готово",
+    statsAnimals: "Питомца", statsFav: "Избранных", statsMsgs: "Сообщений",
+  },
+  en: {
+    feed: "Feed", search: "Search", map: "Map", chat: "Chat", favorites: "Favorites", profile: "Profile",
+    nearYou: "Near you", allPets: "All →", newsTitle: "News & Announcements",
+    heroSub: "Looking for a home today", heroCta: "Help now →", heroCount: "128 pets",
+    searchPlaceholder: "Name or breed...", allTypes: "All types", allCities: "All cities",
+    found: "Found:", notFound: "No pets found", changeFilters: "Try changing filters",
+    mapTitle: "Pet Map", mapSub: "Moscow & surroundings", nearest: "Nearest pets",
+    details: "Details", youAreHere: "📍 You are here",
+    chatTitle: "Chat", online: "● Online", messagePlaceholder: "Write a message...",
+    favTitle: "Favorites", favSaved: "pets saved", favEmpty: "Nothing here yet",
+    favHint: "Tap ❤️ on a pet card\nto add to favorites", findPet: "Find a pet",
+    profileName: "Alexandra", profileCity: "Moscow", profileSince: "With us since March 2024",
+    myPets: "My pets", add: "Add", notifications: "Notifications", enabled: "Enabled",
+    security: "Security", verified: "Verified", support: "Support", settings: "Settings",
+    logout: "Sign out", writeTo: "Message owner",
+    settingsTitle: "Settings", themeLabel: "Theme", langLabel: "Language",
+    themeLight: "Light", themeDark: "Dark", themeSystem: "System",
+    langRu: "Русский", langEn: "English", close: "Done",
+    statsAnimals: "Pets", statsFav: "Favorites", statsMsgs: "Messages",
+  },
+};
 
 const DOG_IMG = "https://cdn.poehali.dev/projects/48dbc168-ef97-4112-a5d9-8f2497e37ea1/files/1b1d1e9e-ba73-4297-b83a-f6d8a7ad2024.jpg";
 const CAT_IMG = "https://cdn.poehali.dev/projects/48dbc168-ef97-4112-a5d9-8f2497e37ea1/files/08d15c17-5cf2-4e17-84ea-d9d823d73a41.jpg";
@@ -46,6 +92,23 @@ export default function Index() {
   const [chatInput, setChatInput] = useState("");
   const [messages, setMessages] = useState(initMessages);
   const [mapSelected, setMapSelected] = useState<typeof mapPets[0] | null>(null);
+  const [theme, setTheme] = useState<Theme>("light");
+  const [lang, setLang] = useState<Lang>("ru");
+  const [showSettings, setShowSettings] = useState(false);
+
+  const t = T[lang];
+
+  useEffect(() => {
+    const root = document.documentElement;
+    if (theme === "dark") {
+      root.classList.add("dark");
+    } else if (theme === "light") {
+      root.classList.remove("dark");
+    } else {
+      const prefersDark = window.matchMedia("(prefers-color-scheme: dark)").matches;
+      root.classList.toggle("dark", prefersDark);
+    }
+  }, [theme]);
 
   const toggleFavorite = (id: number) => {
     setFavorites(prev => prev.includes(id) ? prev.filter(f => f !== id) : [...prev, id]);
@@ -54,8 +117,8 @@ export default function Index() {
   const filteredPets = pets.filter(p => {
     const matchSearch = p.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
       p.breed.toLowerCase().includes(searchQuery.toLowerCase());
-    const matchType = filterType === "Все" || p.type === filterType;
-    const matchCity = filterCity === "Все города" || p.city === filterCity;
+    const matchType = filterType === "Все" || filterType === "All" || p.type === filterType;
+    const matchCity = filterCity === "Все города" || filterCity === "All cities" || p.city === filterCity;
     return matchSearch && matchType && matchCity;
   });
 
@@ -64,7 +127,7 @@ export default function Index() {
   const sendMessage = () => {
     if (!chatInput.trim()) return;
     setMessages(prev => [...prev, {
-      id: prev.length + 1, user: "Я", avatar: "😊",
+      id: prev.length + 1, user: lang === "ru" ? "Я" : "Me", avatar: "😊",
       text: chatInput,
       time: new Date().toLocaleTimeString("ru-RU", { hour: "2-digit", minute: "2-digit" }),
       isMe: true,
@@ -73,18 +136,18 @@ export default function Index() {
   };
 
   const tabs: { id: Tab; icon: string; label: string }[] = [
-    { id: "feed", icon: "Newspaper", label: "Лента" },
-    { id: "search", icon: "Search", label: "Поиск" },
-    { id: "map", icon: "MapPin", label: "Карта" },
-    { id: "chat", icon: "MessageCircle", label: "Чат" },
-    { id: "favorites", icon: "Heart", label: "Избранное" },
-    { id: "profile", icon: "User", label: "Профиль" },
+    { id: "feed", icon: "Newspaper", label: t.feed },
+    { id: "search", icon: "Search", label: t.search },
+    { id: "map", icon: "MapPin", label: t.map },
+    { id: "chat", icon: "MessageCircle", label: t.chat },
+    { id: "favorites", icon: "Heart", label: t.favorites },
+    { id: "profile", icon: "User", label: t.profile },
   ];
 
   return (
     <div className="min-h-screen bg-background paw-bg flex flex-col max-w-md mx-auto relative">
       {/* Header */}
-      <header className="bg-white/90 backdrop-blur-sm sticky top-0 z-50 px-5 py-3 flex items-center justify-between border-b border-border shadow-sm">
+      <header className="bg-card/90 backdrop-blur-sm sticky top-0 z-50 px-5 py-3 flex items-center justify-between border-b border-border shadow-sm">
         <div className="flex items-center gap-2">
           <span className="text-3xl animate-bounce-soft inline-block">🐾</span>
           <span className="font-pacifico text-2xl text-primary">PawFind</span>
@@ -278,7 +341,7 @@ export default function Index() {
                   <div className="w-10 h-10 bg-blue-200/40 rounded-full absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 animate-ping" />
                 </div>
                 <div className="absolute bottom-3 left-3 bg-white/90 rounded-xl px-3 py-2 text-xs font-semibold">
-                  📍 Вы здесь
+                  {t.youAreHere}
                 </div>
               </div>
             </div>
@@ -289,7 +352,7 @@ export default function Index() {
                   <p className="font-black">{mapSelected.name}</p>
                   <p className="text-sm text-muted-foreground">{mapSelected.city}</p>
                 </div>
-                <button className="bg-primary text-white font-bold px-4 py-2 rounded-full text-sm">Подробнее</button>
+                <button className="bg-primary text-white font-bold px-4 py-2 rounded-full text-sm">{t.details}</button>
               </div>
             )}
             <div className="px-4 mt-4">
@@ -314,7 +377,7 @@ export default function Index() {
         {activeTab === "chat" && (
           <div className="animate-fade-in flex flex-col">
             <div className="px-4 pt-5 mb-3">
-              <h2 className="font-black text-2xl">Чат</h2>
+              <h2 className="font-black text-2xl">{t.chatTitle}</h2>
             </div>
             <div className="px-4 mb-4">
               <div className="bg-white rounded-2xl overflow-hidden shadow-sm">
@@ -346,7 +409,7 @@ export default function Index() {
                 <div className="w-9 h-9 bg-gradient-to-br from-primary/20 to-secondary/20 rounded-full flex items-center justify-center text-xl">🦋</div>
                 <div>
                   <p className="font-bold text-sm">Анна К.</p>
-                  <p className="text-xs text-secondary">● Онлайн</p>
+                  <p className="text-xs text-secondary">{t.online}</p>
                 </div>
               </div>
               <div className="p-4 space-y-3 max-h-64 overflow-y-auto">
@@ -363,7 +426,7 @@ export default function Index() {
               <div className="flex items-center gap-2 p-3 border-t border-border">
                 <input
                   type="text"
-                  placeholder="Написать сообщение..."
+                  placeholder={t.messagePlaceholder}
                   value={chatInput}
                   onChange={e => setChatInput(e.target.value)}
                   onKeyDown={e => e.key === "Enter" && sendMessage()}
@@ -428,18 +491,18 @@ export default function Index() {
               <div className="flex items-center gap-4">
                 <div className="w-20 h-20 rounded-full bg-white flex items-center justify-center text-4xl shadow-lg">😊</div>
                 <div className="text-white">
-                  <p className="font-black text-xl">Александра</p>
-                  <p className="opacity-90 text-sm">Москва</p>
-                  <p className="opacity-80 text-xs mt-1">С нами с марта 2024</p>
+                  <p className="font-black text-xl">{t.profileName}</p>
+                  <p className="opacity-90 text-sm">{t.profileCity}</p>
+                  <p className="opacity-80 text-xs mt-1">{t.profileSince}</p>
                 </div>
               </div>
             </div>
-            <div className="mx-4 -mt-10 bg-white rounded-2xl shadow-lg p-4 mb-5">
+            <div className="mx-4 -mt-10 bg-card rounded-2xl shadow-lg p-4 mb-5">
               <div className="grid grid-cols-3 gap-2 text-center">
                 {[
-                  { val: "3", label: "Питомца", emoji: "🐾" },
-                  { val: `${favoritePets.length}`, label: "Избранных", emoji: "❤️" },
-                  { val: "12", label: "Сообщений", emoji: "💬" },
+                  { val: "3", label: t.statsAnimals, emoji: "🐾" },
+                  { val: `${favoritePets.length}`, label: t.statsFav, emoji: "❤️" },
+                  { val: "12", label: t.statsMsgs, emoji: "💬" },
                 ].map((stat, i) => (
                   <div key={i} className="bg-muted rounded-xl p-3">
                     <div className="text-xl mb-1">{stat.emoji}</div>
@@ -450,7 +513,7 @@ export default function Index() {
               </div>
             </div>
             <div className="px-4 mb-5">
-              <h3 className="font-black text-lg mb-3">Мои питомцы</h3>
+              <h3 className="font-black text-lg mb-3">{t.myPets}</h3>
               <div className="flex gap-3 overflow-x-auto pb-2" style={{ scrollbarWidth: "none" }}>
                 {pets.slice(0, 3).map(pet => (
                   <div key={pet.id} className="flex-shrink-0 w-24 text-center">
@@ -464,19 +527,19 @@ export default function Index() {
                   <div className="w-20 h-20 rounded-2xl bg-muted flex items-center justify-center mx-auto mb-1 border-2 border-dashed border-border">
                     <Icon name="Plus" size={24} className="text-muted-foreground" />
                   </div>
-                  <p className="text-xs text-muted-foreground">Добавить</p>
+                  <p className="text-xs text-muted-foreground">{t.add}</p>
                 </div>
               </div>
             </div>
             <div className="px-4">
-              <div className="bg-white rounded-2xl shadow-sm overflow-hidden">
+              <div className="bg-card rounded-2xl shadow-sm overflow-hidden">
                 {[
-                  { icon: "Bell", label: "Уведомления", desc: "Включены" },
-                  { icon: "Shield", label: "Безопасность", desc: "Верифицирован" },
-                  { icon: "HelpCircle", label: "Поддержка", desc: "" },
-                  { icon: "Settings", label: "Настройки", desc: "" },
+                  { icon: "Bell", label: t.notifications, desc: t.enabled, onClick: () => {} },
+                  { icon: "Shield", label: t.security, desc: t.verified, onClick: () => {} },
+                  { icon: "HelpCircle", label: t.support, desc: "", onClick: () => {} },
+                  { icon: "Settings", label: t.settings, desc: "", onClick: () => setShowSettings(true) },
                 ].map((item, i) => (
-                  <div key={i} className={`flex items-center gap-3 px-4 py-4 cursor-pointer hover:bg-muted/50 transition-colors ${i > 0 ? "border-t border-border" : ""}`}>
+                  <div key={i} className={`flex items-center gap-3 px-4 py-4 cursor-pointer hover:bg-muted/50 transition-colors ${i > 0 ? "border-t border-border" : ""}`} onClick={item.onClick}>
                     <div className="w-10 h-10 bg-primary/10 rounded-xl flex items-center justify-center">
                       <Icon name={item.icon as "Bell"} size={18} className="text-primary" />
                     </div>
@@ -489,15 +552,88 @@ export default function Index() {
                 ))}
               </div>
               <button className="w-full mt-4 mb-6 py-3 rounded-2xl border-2 border-red-200 text-red-500 font-bold text-sm hover:bg-red-50 transition-colors">
-                Выйти из аккаунта
+                {t.logout}
               </button>
             </div>
           </div>
         )}
       </main>
 
+      {/* Settings Modal */}
+      {showSettings && (
+        <div className="fixed inset-0 z-[200] flex items-end justify-center" onClick={() => setShowSettings(false)}>
+          <div className="absolute inset-0 bg-black/50 backdrop-blur-sm" />
+          <div className="relative bg-card w-full max-w-md rounded-t-3xl animate-slide-up overflow-hidden" onClick={e => e.stopPropagation()}>
+            {/* Handle */}
+            <div className="flex justify-center pt-3 pb-1">
+              <div className="w-10 h-1 bg-border rounded-full" />
+            </div>
+            <div className="px-5 pb-8">
+              <h2 className="font-black text-xl mb-6 mt-2">{t.settingsTitle}</h2>
+
+              {/* Theme */}
+              <div className="mb-6">
+                <p className="text-sm font-bold text-muted-foreground mb-3 uppercase tracking-wide">{t.themeLabel}</p>
+                <div className="grid grid-cols-3 gap-2">
+                  {([
+                    { val: "light" as Theme, label: t.themeLight, icon: "Sun" },
+                    { val: "dark" as Theme, label: t.themeDark, icon: "Moon" },
+                    { val: "system" as Theme, label: t.themeSystem, icon: "Monitor" },
+                  ]).map(opt => (
+                    <button
+                      key={opt.val}
+                      onClick={() => setTheme(opt.val)}
+                      className={`flex flex-col items-center gap-2 py-4 rounded-2xl border-2 transition-all ${
+                        theme === opt.val
+                          ? "border-primary bg-primary/10 text-primary"
+                          : "border-border bg-muted/40 text-muted-foreground hover:border-primary/40"
+                      }`}
+                    >
+                      <Icon name={opt.icon as "Sun"} size={22} />
+                      <span className="text-xs font-bold">{opt.label}</span>
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              {/* Language */}
+              <div className="mb-8">
+                <p className="text-sm font-bold text-muted-foreground mb-3 uppercase tracking-wide">{t.langLabel}</p>
+                <div className="grid grid-cols-2 gap-2">
+                  {([
+                    { val: "ru" as Lang, label: t.langRu, flag: "🇷🇺" },
+                    { val: "en" as Lang, label: t.langEn, flag: "🇬🇧" },
+                  ]).map(opt => (
+                    <button
+                      key={opt.val}
+                      onClick={() => setLang(opt.val)}
+                      className={`flex items-center gap-3 px-4 py-4 rounded-2xl border-2 transition-all ${
+                        lang === opt.val
+                          ? "border-primary bg-primary/10 text-primary"
+                          : "border-border bg-muted/40 text-muted-foreground hover:border-primary/40"
+                      }`}
+                    >
+                      <span className="text-2xl">{opt.flag}</span>
+                      <span className="font-bold text-sm">{opt.label}</span>
+                      {lang === opt.val && <Icon name="Check" size={16} className="ml-auto text-primary" />}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              <button
+                onClick={() => setShowSettings(false)}
+                className="w-full bg-primary text-white font-bold py-4 rounded-2xl hover:shadow-lg transition-shadow text-base"
+              >
+                {t.close}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Bottom navigation */}
-      <nav className="fixed bottom-0 left-1/2 -translate-x-1/2 w-full max-w-md bg-white/95 backdrop-blur-md border-t border-border px-2 py-2 z-50">
+      <nav className="fixed bottom-0 left-1/2 -translate-x-1/2 w-full max-w-md bg-card/95 backdrop-blur-md border-t border-border px-2 py-2 z-50">
         <div className="flex items-center justify-around">
           {tabs.map(tab => (
             <button
@@ -526,7 +662,7 @@ export default function Index() {
       {selectedPet && (
         <div className="fixed inset-0 z-[100] flex items-end justify-center" onClick={() => setSelectedPet(null)}>
           <div className="absolute inset-0 bg-black/40 backdrop-blur-sm" />
-          <div className="relative bg-white w-full max-w-md rounded-t-3xl animate-slide-up overflow-hidden" onClick={e => e.stopPropagation()}>
+          <div className="relative bg-card w-full max-w-md rounded-t-3xl animate-slide-up overflow-hidden" onClick={e => e.stopPropagation()}>
             <div className="relative h-72">
               <img src={selectedPet.img} alt={selectedPet.name} className="w-full h-full object-cover" />
               <button onClick={() => setSelectedPet(null)} className="absolute top-4 right-4 w-9 h-9 bg-white/90 rounded-full flex items-center justify-center shadow-md">
@@ -557,7 +693,7 @@ export default function Index() {
                   className="flex-1 bg-primary text-white font-bold py-3 rounded-2xl hover:shadow-lg transition-shadow"
                   onClick={() => { setSelectedPet(null); setActiveTab("chat"); }}
                 >
-                  Написать хозяину
+                  {t.writeTo}
                 </button>
                 <button
                   className="w-12 h-12 border-2 border-border rounded-2xl flex items-center justify-center hover:bg-muted transition-colors"

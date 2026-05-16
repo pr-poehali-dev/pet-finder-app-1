@@ -37,6 +37,36 @@
 }
 
 @layer base {
+  .dark {
+    --background: 20 15% 10%;
+    --foreground: 38 30% 92%;
+
+    --card: 20 12% 14%;
+    --card-foreground: 38 30% 92%;
+
+    --popover: 20 12% 14%;
+    --popover-foreground: 38 30% 92%;
+
+    --primary: 25 95% 58%;
+    --primary-foreground: 0 0% 100%;
+
+    --secondary: 142 55% 42%;
+    --secondary-foreground: 0 0% 100%;
+
+    --muted: 20 10% 20%;
+    --muted-foreground: 38 15% 60%;
+
+    --accent: 45 80% 50%;
+    --accent-foreground: 20 20% 10%;
+
+    --destructive: 0 70% 50%;
+    --destructive-foreground: 0 0% 100%;
+
+    --border: 20 10% 22%;
+    --input: 20 10% 22%;
+    --ring: 25 95% 58%;
+  }
+
   * {
     @apply border-border;
   }
@@ -44,6 +74,9 @@
   body {
     @apply bg-background text-foreground;
     font-family: "Nunito", sans-serif;
+    transition:
+      background-color 0.3s ease,
+      color 0.3s ease;
   }
 }
 
