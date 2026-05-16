@@ -95,6 +95,17 @@ export default function Index() {
   const [theme, setTheme] = useState<Theme>("light");
   const [lang, setLang] = useState<Lang>("ru");
   const [showSettings, setShowSettings] = useState(false);
+  const [showEditProfile, setShowEditProfile] = useState(false);
+  const [showNewAd, setShowNewAd] = useState(false);
+  const [profileData, setProfileData] = useState({
+    name: "Александра", city: "Москва", phone: "+7 900 123-45-67", about: "Люблю животных, особенно собак 🐾",
+  });
+  const [editProfile, setEditProfile] = useState(profileData);
+  const [ads, setAds] = useState([
+    { id: 1, petName: "Барсик", type: "Собака", breed: "Золотистый ретривер", city: "Москва", status: "active", img: DOG_IMG, views: 34, date: "12 мая" },
+    { id: 2, petName: "Мурка", type: "Кошка", breed: "Рыжий табби", city: "СПб", status: "closed", img: CAT_IMG, views: 87, date: "3 апреля" },
+  ]);
+  const [newAd, setNewAd] = useState({ petName: "", type: "Собака", breed: "", city: "", desc: "" });
 
   const t = T[lang];
 
@@ -487,20 +498,29 @@ export default function Index() {
         {/* PROFILE TAB */}
         {activeTab === "profile" && (
           <div className="animate-fade-in">
+            {/* Hero */}
             <div className="bg-gradient-to-br from-primary to-orange-300 px-4 pt-6 pb-16 relative">
               <div className="flex items-center gap-4">
                 <div className="w-20 h-20 rounded-full bg-white flex items-center justify-center text-4xl shadow-lg">😊</div>
-                <div className="text-white">
-                  <p className="font-black text-xl">{t.profileName}</p>
-                  <p className="opacity-90 text-sm">{t.profileCity}</p>
-                  <p className="opacity-80 text-xs mt-1">{t.profileSince}</p>
+                <div className="text-white flex-1">
+                  <p className="font-black text-xl">{profileData.name}</p>
+                  <p className="opacity-90 text-sm">{profileData.city}</p>
+                  {profileData.about && <p className="opacity-75 text-xs mt-1 line-clamp-1">{profileData.about}</p>}
                 </div>
+                <button
+                  onClick={() => { setEditProfile(profileData); setShowEditProfile(true); }}
+                  className="w-9 h-9 bg-white/20 hover:bg-white/30 rounded-full flex items-center justify-center transition-colors flex-shrink-0"
+                >
+                  <Icon name="Pencil" size={16} className="text-white" />
+                </button>
               </div>
             </div>
+
+            {/* Stats */}
             <div className="mx-4 -mt-10 bg-card rounded-2xl shadow-lg p-4 mb-5">
               <div className="grid grid-cols-3 gap-2 text-center">
                 {[
-                  { val: "3", label: t.statsAnimals, emoji: "🐾" },
+                  { val: `${ads.filter(a => a.status === "active").length}`, label: "Объявлений", emoji: "📢" },
                   { val: `${favoritePets.length}`, label: t.statsFav, emoji: "❤️" },
                   { val: "12", label: t.statsMsgs, emoji: "💬" },
                 ].map((stat, i) => (
@@ -512,25 +532,68 @@ export default function Index() {
                 ))}
               </div>
             </div>
+
+            {/* My Ads */}
             <div className="px-4 mb-5">
-              <h3 className="font-black text-lg mb-3">{t.myPets}</h3>
-              <div className="flex gap-3 overflow-x-auto pb-2" style={{ scrollbarWidth: "none" }}>
-                {pets.slice(0, 3).map(pet => (
-                  <div key={pet.id} className="flex-shrink-0 w-24 text-center">
-                    <div className="w-20 h-20 rounded-2xl overflow-hidden mx-auto mb-1">
-                      <img src={pet.img} alt={pet.name} className="w-full h-full object-cover" />
-                    </div>
-                    <p className="text-xs font-bold truncate">{pet.name}</p>
-                  </div>
-                ))}
-                <div className="flex-shrink-0 w-24 text-center">
-                  <div className="w-20 h-20 rounded-2xl bg-muted flex items-center justify-center mx-auto mb-1 border-2 border-dashed border-border">
-                    <Icon name="Plus" size={24} className="text-muted-foreground" />
-                  </div>
-                  <p className="text-xs text-muted-foreground">{t.add}</p>
-                </div>
+              <div className="flex items-center justify-between mb-3">
+                <h3 className="font-black text-lg">Мои объявления</h3>
+                <button
+                  onClick={() => { setNewAd({ petName: "", type: "Собака", breed: "", city: profileData.city, desc: "" }); setShowNewAd(true); }}
+                  className="flex items-center gap-1.5 bg-primary text-white text-xs font-bold px-3 py-2 rounded-full hover:shadow-md transition-shadow"
+                >
+                  <Icon name="Plus" size={14} />
+                  Добавить
+                </button>
               </div>
+              {ads.length === 0 ? (
+                <div className="bg-card rounded-2xl p-8 text-center shadow-sm border border-dashed border-border">
+                  <div className="text-4xl mb-3">📢</div>
+                  <p className="font-bold">Нет объявлений</p>
+                  <p className="text-sm text-muted-foreground mt-1">Разместите питомца, чтобы найти ему дом</p>
+                </div>
+              ) : (
+                <div className="space-y-3">
+                  {ads.map((ad, i) => (
+                    <div key={ad.id} className="bg-card rounded-2xl overflow-hidden shadow-sm flex animate-fade-in" style={{ animationDelay: `${i * 0.07}s` }}>
+                      <img src={ad.img} alt={ad.petName} className="w-24 h-24 object-cover flex-shrink-0" />
+                      <div className="p-3 flex-1 min-w-0">
+                        <div className="flex items-start justify-between gap-1">
+                          <div className="min-w-0">
+                            <p className="font-black text-sm truncate">{ad.petName}</p>
+                            <p className="text-xs text-muted-foreground truncate">{ad.breed} · {ad.city}</p>
+                          </div>
+                          <span className={`flex-shrink-0 text-xs font-bold px-2 py-0.5 rounded-full ${ad.status === "active" ? "bg-green-100 text-green-600" : "bg-muted text-muted-foreground"}`}>
+                            {ad.status === "active" ? "Активно" : "Закрыто"}
+                          </span>
+                        </div>
+                        <div className="flex items-center gap-3 mt-2">
+                          <span className="text-xs text-muted-foreground flex items-center gap-1">
+                            <Icon name="Eye" size={11} /> {ad.views}
+                          </span>
+                          <span className="text-xs text-muted-foreground">{ad.date}</span>
+                        </div>
+                        <div className="flex gap-2 mt-2">
+                          <button
+                            onClick={() => setAds(prev => prev.map(a => a.id === ad.id ? { ...a, status: a.status === "active" ? "closed" : "active" } : a))}
+                            className="text-xs font-bold text-primary hover:underline"
+                          >
+                            {ad.status === "active" ? "Закрыть" : "Открыть"}
+                          </button>
+                          <button
+                            onClick={() => setAds(prev => prev.filter(a => a.id !== ad.id))}
+                            className="text-xs font-bold text-red-400 hover:underline"
+                          >
+                            Удалить
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
             </div>
+
+            {/* Menu */}
             <div className="px-4">
               <div className="bg-card rounded-2xl shadow-sm overflow-hidden">
                 {[
@@ -558,6 +621,163 @@ export default function Index() {
           </div>
         )}
       </main>
+
+      {/* Edit Profile Modal */}
+      {showEditProfile && (
+        <div className="fixed inset-0 z-[200] flex items-end justify-center" onClick={() => setShowEditProfile(false)}>
+          <div className="absolute inset-0 bg-black/50 backdrop-blur-sm" />
+          <div className="relative bg-card w-full max-w-md rounded-t-3xl animate-slide-up overflow-hidden" onClick={e => e.stopPropagation()}>
+            <div className="flex justify-center pt-3 pb-1">
+              <div className="w-10 h-1 bg-border rounded-full" />
+            </div>
+            <div className="px-5 pb-8">
+              <div className="flex items-center justify-between mb-5 mt-2">
+                <h2 className="font-black text-xl">Редактировать профиль</h2>
+                <button onClick={() => setShowEditProfile(false)} className="w-8 h-8 bg-muted rounded-full flex items-center justify-center">
+                  <Icon name="X" size={16} />
+                </button>
+              </div>
+
+              {/* Avatar */}
+              <div className="flex justify-center mb-5">
+                <div className="relative">
+                  <div className="w-20 h-20 rounded-full bg-gradient-to-br from-primary to-orange-300 flex items-center justify-center text-4xl shadow-lg">😊</div>
+                  <button className="absolute -bottom-1 -right-1 w-7 h-7 bg-primary rounded-full flex items-center justify-center shadow-md">
+                    <Icon name="Camera" size={13} className="text-white" />
+                  </button>
+                </div>
+              </div>
+
+              <div className="space-y-3">
+                {[
+                  { label: "Имя", key: "name", placeholder: "Ваше имя", type: "text" },
+                  { label: "Город", key: "city", placeholder: "Ваш город", type: "text" },
+                  { label: "Телефон", key: "phone", placeholder: "+7 000 000-00-00", type: "tel" },
+                ].map(field => (
+                  <div key={field.key}>
+                    <label className="text-xs font-bold text-muted-foreground uppercase tracking-wide block mb-1">{field.label}</label>
+                    <input
+                      type={field.type}
+                      value={editProfile[field.key as keyof typeof editProfile]}
+                      onChange={e => setEditProfile(prev => ({ ...prev, [field.key]: e.target.value }))}
+                      placeholder={field.placeholder}
+                      className="w-full px-4 py-3 bg-muted rounded-xl border border-border focus:outline-none focus:ring-2 focus:ring-primary text-sm font-nunito"
+                    />
+                  </div>
+                ))}
+                <div>
+                  <label className="text-xs font-bold text-muted-foreground uppercase tracking-wide block mb-1">О себе</label>
+                  <textarea
+                    value={editProfile.about}
+                    onChange={e => setEditProfile(prev => ({ ...prev, about: e.target.value }))}
+                    placeholder="Расскажите о себе..."
+                    rows={3}
+                    className="w-full px-4 py-3 bg-muted rounded-xl border border-border focus:outline-none focus:ring-2 focus:ring-primary text-sm font-nunito resize-none"
+                  />
+                </div>
+              </div>
+
+              <button
+                onClick={() => { setProfileData(editProfile); setShowEditProfile(false); }}
+                className="w-full mt-5 bg-primary text-white font-bold py-4 rounded-2xl hover:shadow-lg transition-shadow"
+              >
+                Сохранить изменения
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* New Ad Modal */}
+      {showNewAd && (
+        <div className="fixed inset-0 z-[200] flex items-end justify-center" onClick={() => setShowNewAd(false)}>
+          <div className="absolute inset-0 bg-black/50 backdrop-blur-sm" />
+          <div className="relative bg-card w-full max-w-md rounded-t-3xl animate-slide-up overflow-hidden" onClick={e => e.stopPropagation()}>
+            <div className="flex justify-center pt-3 pb-1">
+              <div className="w-10 h-1 bg-border rounded-full" />
+            </div>
+            <div className="px-5 pb-8 max-h-[85vh] overflow-y-auto">
+              <div className="flex items-center justify-between mb-5 mt-2">
+                <h2 className="font-black text-xl">Новое объявление</h2>
+                <button onClick={() => setShowNewAd(false)} className="w-8 h-8 bg-muted rounded-full flex items-center justify-center">
+                  <Icon name="X" size={16} />
+                </button>
+              </div>
+
+              {/* Pet type selector */}
+              <div className="mb-4">
+                <label className="text-xs font-bold text-muted-foreground uppercase tracking-wide block mb-2">Вид животного</label>
+                <div className="flex gap-2">
+                  {["Собака", "Кошка", "Кролик", "Другое"].map(type => (
+                    <button
+                      key={type}
+                      onClick={() => setNewAd(prev => ({ ...prev, type }))}
+                      className={`flex-1 py-2.5 rounded-xl text-xs font-bold border-2 transition-all ${newAd.type === type ? "border-primary bg-primary/10 text-primary" : "border-border bg-muted/50 text-muted-foreground"}`}
+                    >
+                      {type === "Собака" ? "🐕" : type === "Кошка" ? "🐈" : type === "Кролик" ? "🐇" : "🐾"}<br />{type}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              {/* Photo upload placeholder */}
+              <div className="mb-4">
+                <label className="text-xs font-bold text-muted-foreground uppercase tracking-wide block mb-2">Фото</label>
+                <div className="w-full h-32 bg-muted rounded-2xl border-2 border-dashed border-border flex flex-col items-center justify-center gap-2 cursor-pointer hover:bg-muted/80 transition-colors">
+                  <Icon name="Camera" size={28} className="text-muted-foreground" />
+                  <p className="text-sm text-muted-foreground font-semibold">Добавить фото</p>
+                </div>
+              </div>
+
+              <div className="space-y-3">
+                {[
+                  { label: "Кличка", key: "petName", placeholder: "Имя питомца" },
+                  { label: "Порода", key: "breed", placeholder: "Например: Лабрадор" },
+                  { label: "Город", key: "city", placeholder: "Ваш город" },
+                ].map(field => (
+                  <div key={field.key}>
+                    <label className="text-xs font-bold text-muted-foreground uppercase tracking-wide block mb-1">{field.label}</label>
+                    <input
+                      type="text"
+                      value={newAd[field.key as keyof typeof newAd]}
+                      onChange={e => setNewAd(prev => ({ ...prev, [field.key]: e.target.value }))}
+                      placeholder={field.placeholder}
+                      className="w-full px-4 py-3 bg-muted rounded-xl border border-border focus:outline-none focus:ring-2 focus:ring-primary text-sm font-nunito"
+                    />
+                  </div>
+                ))}
+                <div>
+                  <label className="text-xs font-bold text-muted-foreground uppercase tracking-wide block mb-1">Описание</label>
+                  <textarea
+                    value={newAd.desc}
+                    onChange={e => setNewAd(prev => ({ ...prev, desc: e.target.value }))}
+                    placeholder="Расскажите о характере питомца..."
+                    rows={3}
+                    className="w-full px-4 py-3 bg-muted rounded-xl border border-border focus:outline-none focus:ring-2 focus:ring-primary text-sm font-nunito resize-none"
+                  />
+                </div>
+              </div>
+
+              <button
+                onClick={() => {
+                  if (!newAd.petName.trim()) return;
+                  setAds(prev => [{
+                    id: Date.now(), petName: newAd.petName, type: newAd.type,
+                    breed: newAd.breed || "Не указана", city: newAd.city || profileData.city,
+                    status: "active", img: DOG_IMG, views: 0,
+                    date: new Date().toLocaleDateString("ru-RU", { day: "numeric", month: "long" }),
+                  }, ...prev]);
+                  setShowNewAd(false);
+                }}
+                disabled={!newAd.petName.trim()}
+                className="w-full mt-5 bg-primary text-white font-bold py-4 rounded-2xl hover:shadow-lg transition-shadow disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                Опубликовать объявление
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Settings Modal */}
       {showSettings && (
