@@ -106,6 +106,26 @@ export default function Index() {
     { id: 2, petName: "Мурка", type: "Кошка", breed: "Рыжий табби", city: "СПб", status: "closed", img: CAT_IMG, views: 87, date: "3 апреля" },
   ]);
   const [newAd, setNewAd] = useState({ petName: "", type: "Собака", breed: "", city: "", desc: "" });
+  const [showNotifSettings, setShowNotifSettings] = useState(false);
+  const [notifSettings, setNotifSettings] = useState({
+    messages: true,
+    newPets: true,
+    favorites: false,
+    news: true,
+    adViews: true,
+    system: false,
+    quietMode: false,
+    quietFrom: "22:00",
+    quietTo: "08:00",
+  });
+  const [notifList] = useState([
+    { id: 1, icon: "💬", title: "Анна К. написала вам", desc: "Можно договориться о встрече?", time: "14:27", read: false },
+    { id: 2, icon: "👁️", title: "34 просмотра объявления", desc: "Барсик — Золотистый ретривер", time: "13:00", read: false },
+    { id: 3, icon: "🐾", title: "Новый питомец рядом с вами", desc: "Рекс, Бордер колли, Москва", time: "вчера", read: true },
+    { id: 4, icon: "❤️", title: "Мурка добавлена в избранное", desc: "Кто-то заинтересовался", time: "вчера", read: true },
+    { id: 5, icon: "📋", title: "Новые правила площадки", desc: "Обновление политики конфиденциальности", time: "2 дня назад", read: true },
+  ]);
+  const [showNotifPanel, setShowNotifPanel] = useState(false);
 
   const t = T[lang];
 
@@ -164,8 +184,16 @@ export default function Index() {
           <span className="font-pacifico text-2xl text-primary">PawFind</span>
         </div>
         <div className="flex items-center gap-2">
-          <button className="w-9 h-9 rounded-full bg-muted flex items-center justify-center hover:bg-primary hover:text-white transition-colors">
+          <button
+            onClick={() => setShowNotifPanel(true)}
+            className="relative w-9 h-9 rounded-full bg-muted flex items-center justify-center hover:bg-primary hover:text-white transition-colors"
+          >
             <Icon name="Bell" size={18} />
+            {notifList.filter(n => !n.read).length > 0 && (
+              <span className="absolute -top-0.5 -right-0.5 w-4 h-4 bg-primary rounded-full text-white text-[9px] font-black flex items-center justify-center border border-card">
+                {notifList.filter(n => !n.read).length}
+              </span>
+            )}
           </button>
           <div className="w-9 h-9 rounded-full bg-gradient-to-br from-primary to-orange-300 flex items-center justify-center text-white font-bold text-sm">А</div>
         </div>
@@ -597,7 +625,7 @@ export default function Index() {
             <div className="px-4">
               <div className="bg-card rounded-2xl shadow-sm overflow-hidden">
                 {[
-                  { icon: "Bell", label: t.notifications, desc: t.enabled, onClick: () => {} },
+                  { icon: "Bell", label: t.notifications, desc: t.enabled, onClick: () => setShowNotifSettings(true) },
                   { icon: "Shield", label: t.security, desc: t.verified, onClick: () => {} },
                   { icon: "HelpCircle", label: t.support, desc: "", onClick: () => {} },
                   { icon: "Settings", label: t.settings, desc: "", onClick: () => setShowSettings(true) },
@@ -621,6 +649,182 @@ export default function Index() {
           </div>
         )}
       </main>
+
+      {/* Notifications Panel */}
+      {showNotifPanel && (
+        <div className="fixed inset-0 z-[200] flex items-end justify-center" onClick={() => setShowNotifPanel(false)}>
+          <div className="absolute inset-0 bg-black/50 backdrop-blur-sm" />
+          <div className="relative bg-card w-full max-w-md rounded-t-3xl animate-slide-up" onClick={e => e.stopPropagation()} style={{ maxHeight: "85vh" }}>
+            <div className="flex justify-center pt-3 pb-1">
+              <div className="w-10 h-1 bg-border rounded-full" />
+            </div>
+            <div className="px-5 pt-2 pb-3 flex items-center justify-between">
+              <h2 className="font-black text-xl">Уведомления</h2>
+              <div className="flex items-center gap-2">
+                <button
+                  onClick={() => { setShowNotifPanel(false); setShowNotifSettings(true); }}
+                  className="flex items-center gap-1.5 text-xs font-bold text-primary bg-primary/10 px-3 py-1.5 rounded-full"
+                >
+                  <Icon name="SlidersHorizontal" size={13} />
+                  Настройки
+                </button>
+                <button onClick={() => setShowNotifPanel(false)} className="w-8 h-8 bg-muted rounded-full flex items-center justify-center">
+                  <Icon name="X" size={15} />
+                </button>
+              </div>
+            </div>
+            <div className="overflow-y-auto pb-6" style={{ maxHeight: "calc(85vh - 80px)" }}>
+              {notifList.map((n, i) => (
+                <div key={n.id} className={`flex items-start gap-3 px-5 py-4 transition-colors ${!n.read ? "bg-primary/5" : ""} ${i > 0 ? "border-t border-border" : ""}`}>
+                  <div className={`w-11 h-11 rounded-2xl flex items-center justify-center text-xl flex-shrink-0 ${!n.read ? "bg-primary/15" : "bg-muted"}`}>
+                    {n.icon}
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <p className={`text-sm leading-snug ${!n.read ? "font-black" : "font-bold"}`}>{n.title}</p>
+                    <p className="text-xs text-muted-foreground mt-0.5 truncate">{n.desc}</p>
+                    <p className="text-xs text-muted-foreground mt-1">{n.time}</p>
+                  </div>
+                  {!n.read && <div className="w-2 h-2 bg-primary rounded-full flex-shrink-0 mt-2" />}
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Notification Settings Modal */}
+      {showNotifSettings && (
+        <div className="fixed inset-0 z-[200] flex items-end justify-center" onClick={() => setShowNotifSettings(false)}>
+          <div className="absolute inset-0 bg-black/50 backdrop-blur-sm" />
+          <div className="relative bg-card w-full max-w-md rounded-t-3xl animate-slide-up" onClick={e => e.stopPropagation()} style={{ maxHeight: "90vh" }}>
+            <div className="flex justify-center pt-3 pb-1">
+              <div className="w-10 h-1 bg-border rounded-full" />
+            </div>
+            <div className="px-5 pt-2 pb-3 flex items-center justify-between">
+              <h2 className="font-black text-xl">Настройка уведомлений</h2>
+              <button onClick={() => setShowNotifSettings(false)} className="w-8 h-8 bg-muted rounded-full flex items-center justify-center">
+                <Icon name="X" size={15} />
+              </button>
+            </div>
+
+            <div className="overflow-y-auto pb-8 px-5" style={{ maxHeight: "calc(90vh - 80px)" }}>
+              {/* Master toggle */}
+              <div className="bg-gradient-to-r from-primary/10 to-secondary/10 rounded-2xl p-4 mb-5 flex items-center gap-3">
+                <div className="w-11 h-11 bg-primary/20 rounded-xl flex items-center justify-center">
+                  <Icon name="Bell" size={20} className="text-primary" />
+                </div>
+                <div className="flex-1">
+                  <p className="font-black text-sm">Все уведомления</p>
+                  <p className="text-xs text-muted-foreground">Включить или выключить всё</p>
+                </div>
+                <button
+                  onClick={() => {
+                    const allOn = Object.entries(notifSettings).filter(([k]) => k !== "quietMode" && k !== "quietFrom" && k !== "quietTo").every(([,v]) => v === true);
+                    setNotifSettings(prev => ({
+                      ...prev,
+                      messages: !allOn, newPets: !allOn, favorites: !allOn,
+                      news: !allOn, adViews: !allOn, system: !allOn,
+                    }));
+                  }}
+                  className={`relative w-12 h-6 rounded-full transition-colors flex-shrink-0 ${
+                    [notifSettings.messages, notifSettings.newPets, notifSettings.favorites, notifSettings.news, notifSettings.adViews, notifSettings.system].some(Boolean)
+                      ? "bg-primary" : "bg-muted"
+                  }`}
+                >
+                  <div className={`absolute top-0.5 w-5 h-5 bg-white rounded-full shadow transition-all ${
+                    [notifSettings.messages, notifSettings.newPets, notifSettings.favorites, notifSettings.news, notifSettings.adViews, notifSettings.system].some(Boolean)
+                      ? "left-6.5" : "left-0.5"
+                  }`} style={{ left: [notifSettings.messages, notifSettings.newPets, notifSettings.favorites, notifSettings.news, notifSettings.adViews, notifSettings.system].some(Boolean) ? "26px" : "2px" }} />
+                </button>
+              </div>
+
+              {/* Category toggles */}
+              <p className="text-xs font-bold text-muted-foreground uppercase tracking-wide mb-3">По категориям</p>
+              <div className="bg-card border border-border rounded-2xl overflow-hidden mb-5 shadow-sm">
+                {([
+                  { key: "messages", icon: "MessageCircle", label: "Сообщения", desc: "Новые сообщения в чате", color: "text-blue-500", bg: "bg-blue-50" },
+                  { key: "newPets", icon: "PawPrint", label: "Новые питомцы", desc: "Питомцы рядом с вами", color: "text-green-500", bg: "bg-green-50" },
+                  { key: "favorites", icon: "Heart", label: "Избранное", desc: "Обновления сохранённых", color: "text-red-500", bg: "bg-red-50" },
+                  { key: "adViews", icon: "Eye", label: "Просмотры объявлений", desc: "Кто смотрел ваших питомцев", color: "text-orange-500", bg: "bg-orange-50" },
+                  { key: "news", icon: "Newspaper", label: "Новости и акции", desc: "Обновления площадки", color: "text-purple-500", bg: "bg-purple-50" },
+                  { key: "system", icon: "Settings", label: "Системные", desc: "Технические уведомления", color: "text-muted-foreground", bg: "bg-muted" },
+                ] as const).map((item, i) => (
+                  <div key={item.key} className={`flex items-center gap-3 px-4 py-3.5 ${i > 0 ? "border-t border-border" : ""}`}>
+                    <div className={`w-9 h-9 ${item.bg} rounded-xl flex items-center justify-center flex-shrink-0`}>
+                      <Icon name={item.icon} size={17} className={item.color} />
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <p className="font-bold text-sm">{item.label}</p>
+                      <p className="text-xs text-muted-foreground">{item.desc}</p>
+                    </div>
+                    <button
+                      onClick={() => setNotifSettings(prev => ({ ...prev, [item.key]: !prev[item.key as keyof typeof prev] }))}
+                      className={`relative w-11 h-6 rounded-full transition-colors flex-shrink-0 ${notifSettings[item.key as keyof typeof notifSettings] ? "bg-primary" : "bg-muted"}`}
+                    >
+                      <div
+                        className="absolute top-0.5 w-5 h-5 bg-white rounded-full shadow transition-all"
+                        style={{ left: notifSettings[item.key as keyof typeof notifSettings] ? "22px" : "2px" }}
+                      />
+                    </button>
+                  </div>
+                ))}
+              </div>
+
+              {/* Quiet hours */}
+              <p className="text-xs font-bold text-muted-foreground uppercase tracking-wide mb-3">Режим тишины</p>
+              <div className="bg-card border border-border rounded-2xl overflow-hidden shadow-sm mb-5">
+                <div className="flex items-center gap-3 px-4 py-4">
+                  <div className="w-9 h-9 bg-indigo-50 rounded-xl flex items-center justify-center flex-shrink-0">
+                    <Icon name="Moon" size={17} className="text-indigo-500" />
+                  </div>
+                  <div className="flex-1">
+                    <p className="font-bold text-sm">Не беспокоить</p>
+                    <p className="text-xs text-muted-foreground">Уведомления будут отложены</p>
+                  </div>
+                  <button
+                    onClick={() => setNotifSettings(prev => ({ ...prev, quietMode: !prev.quietMode }))}
+                    className={`relative w-11 h-6 rounded-full transition-colors flex-shrink-0 ${notifSettings.quietMode ? "bg-indigo-500" : "bg-muted"}`}
+                  >
+                    <div
+                      className="absolute top-0.5 w-5 h-5 bg-white rounded-full shadow transition-all"
+                      style={{ left: notifSettings.quietMode ? "22px" : "2px" }}
+                    />
+                  </button>
+                </div>
+                {notifSettings.quietMode && (
+                  <div className="border-t border-border px-4 py-3 flex items-center gap-4 bg-indigo-50/50 animate-fade-in">
+                    <div className="flex-1">
+                      <p className="text-xs text-muted-foreground mb-1 font-semibold">С</p>
+                      <input
+                        type="time"
+                        value={notifSettings.quietFrom}
+                        onChange={e => setNotifSettings(prev => ({ ...prev, quietFrom: e.target.value }))}
+                        className="w-full bg-white border border-border rounded-xl px-3 py-2 text-sm font-bold focus:outline-none focus:ring-2 focus:ring-indigo-400"
+                      />
+                    </div>
+                    <div className="flex-1">
+                      <p className="text-xs text-muted-foreground mb-1 font-semibold">До</p>
+                      <input
+                        type="time"
+                        value={notifSettings.quietTo}
+                        onChange={e => setNotifSettings(prev => ({ ...prev, quietTo: e.target.value }))}
+                        className="w-full bg-white border border-border rounded-xl px-3 py-2 text-sm font-bold focus:outline-none focus:ring-2 focus:ring-indigo-400"
+                      />
+                    </div>
+                  </div>
+                )}
+              </div>
+
+              <button
+                onClick={() => setShowNotifSettings(false)}
+                className="w-full bg-primary text-white font-bold py-4 rounded-2xl hover:shadow-lg transition-shadow"
+              >
+                Сохранить
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Edit Profile Modal */}
       {showEditProfile && (
