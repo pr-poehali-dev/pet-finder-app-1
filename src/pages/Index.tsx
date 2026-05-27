@@ -107,7 +107,8 @@ export default function Index() {
   ]);
   const [newAd, setNewAd] = useState({ petName: "", type: "Собака", breed: "", city: "", desc: "" });
   const [showNotifSettings, setShowNotifSettings] = useState(false);
-  const [notifSettings, setNotifSettings] = useState({
+  type NotifToggles = { messages: boolean; newPets: boolean; favorites: boolean; news: boolean; adViews: boolean; system: boolean; quietMode: boolean };
+  const [notifSettings, setNotifSettings] = useState<NotifToggles & { quietFrom: string; quietTo: string }>({
     messages: true,
     newPets: true,
     favorites: false,
@@ -719,7 +720,7 @@ export default function Index() {
                 </div>
                 <button
                   onClick={() => {
-                    const allOn = Object.entries(notifSettings).filter(([k]) => k !== "quietMode" && k !== "quietFrom" && k !== "quietTo").every(([,v]) => v === true);
+                    const allOn = notifSettings.messages && notifSettings.newPets && notifSettings.favorites && notifSettings.news && notifSettings.adViews && notifSettings.system;
                     setNotifSettings(prev => ({
                       ...prev,
                       messages: !allOn, newPets: !allOn, favorites: !allOn,
@@ -741,29 +742,31 @@ export default function Index() {
               {/* Category toggles */}
               <p className="text-xs font-bold text-muted-foreground uppercase tracking-wide mb-3">По категориям</p>
               <div className="bg-card border border-border rounded-2xl overflow-hidden mb-5 shadow-sm">
-                {([
-                  { key: "messages", icon: "MessageCircle", label: "Сообщения", desc: "Новые сообщения в чате", color: "text-blue-500", bg: "bg-blue-50" },
-                  { key: "newPets", icon: "PawPrint", label: "Новые питомцы", desc: "Питомцы рядом с вами", color: "text-green-500", bg: "bg-green-50" },
-                  { key: "favorites", icon: "Heart", label: "Избранное", desc: "Обновления сохранённых", color: "text-red-500", bg: "bg-red-50" },
-                  { key: "adViews", icon: "Eye", label: "Просмотры объявлений", desc: "Кто смотрел ваших питомцев", color: "text-orange-500", bg: "bg-orange-50" },
-                  { key: "news", icon: "Newspaper", label: "Новости и акции", desc: "Обновления площадки", color: "text-purple-500", bg: "bg-purple-50" },
-                  { key: "system", icon: "Settings", label: "Системные", desc: "Технические уведомления", color: "text-muted-foreground", bg: "bg-muted" },
-                ] as const).map((item, i) => (
+                {(
+                  [
+                    { key: "messages" as const, icon: "MessageCircle", label: "Сообщения", desc: "Новые сообщения в чате", color: "text-blue-500", bg: "bg-blue-50" },
+                    { key: "newPets" as const, icon: "PawPrint", label: "Новые питомцы", desc: "Питомцы рядом с вами", color: "text-green-500", bg: "bg-green-50" },
+                    { key: "favorites" as const, icon: "Heart", label: "Избранное", desc: "Обновления сохранённых", color: "text-red-500", bg: "bg-red-50" },
+                    { key: "adViews" as const, icon: "Eye", label: "Просмотры объявлений", desc: "Кто смотрел ваших питомцев", color: "text-orange-500", bg: "bg-orange-50" },
+                    { key: "news" as const, icon: "Newspaper", label: "Новости и акции", desc: "Обновления площадки", color: "text-purple-500", bg: "bg-purple-50" },
+                    { key: "system" as const, icon: "Settings", label: "Системные", desc: "Технические уведомления", color: "text-muted-foreground", bg: "bg-muted" },
+                  ] as { key: keyof NotifToggles; icon: string; label: string; desc: string; color: string; bg: string }[]
+                ).map((item, i) => (
                   <div key={item.key} className={`flex items-center gap-3 px-4 py-3.5 ${i > 0 ? "border-t border-border" : ""}`}>
                     <div className={`w-9 h-9 ${item.bg} rounded-xl flex items-center justify-center flex-shrink-0`}>
-                      <Icon name={item.icon} size={17} className={item.color} />
+                      <Icon name={item.icon as "Bell"} size={17} className={item.color} />
                     </div>
                     <div className="flex-1 min-w-0">
                       <p className="font-bold text-sm">{item.label}</p>
                       <p className="text-xs text-muted-foreground">{item.desc}</p>
                     </div>
                     <button
-                      onClick={() => setNotifSettings(prev => ({ ...prev, [item.key]: !prev[item.key as keyof typeof prev] }))}
-                      className={`relative w-11 h-6 rounded-full transition-colors flex-shrink-0 ${notifSettings[item.key as keyof typeof notifSettings] ? "bg-primary" : "bg-muted"}`}
+                      onClick={() => setNotifSettings(prev => ({ ...prev, [item.key]: !prev[item.key] }))}
+                      className={`relative w-11 h-6 rounded-full transition-colors flex-shrink-0 ${notifSettings[item.key] ? "bg-primary" : "bg-muted"}`}
                     >
                       <div
                         className="absolute top-0.5 w-5 h-5 bg-white rounded-full shadow transition-all"
-                        style={{ left: notifSettings[item.key as keyof typeof notifSettings] ? "22px" : "2px" }}
+                        style={{ left: notifSettings[item.key] ? "22px" : "2px" }}
                       />
                     </button>
                   </div>
